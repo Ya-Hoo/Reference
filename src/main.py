@@ -25,7 +25,10 @@ with open(BOOKS, 'r') as f:
                 msg = f"Line {index + 1} >> SUCCESS"
                 txt_decor(msg, 1)
                 data = json.loads(book.read())
-                print(data)
+                
+                vol_info = data["volumeInfo"]
+                TITLE, SUBTITLE = vol_info["title"], vol_info["subtitle"]
+                AUTHORS, DATE = vol_info["authors"], vol_info["publishedDate"]
         else:
             msg = f"Line {index + 1} >> ERROR: Invalid ISBN\n"
             txt_decor(msg, 0)
