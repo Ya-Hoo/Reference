@@ -1,3 +1,6 @@
+from urllib.parse import urlparse
+
+
 def isbn10(isbn10: str) -> bool:
     if len(isbn10) != 10:
          return 0
@@ -10,9 +13,9 @@ def isbn13(isbn13: str) -> bool:
     check_digit = sum([int(isbn13[i]) * [1, 3][i % 2] for i in range(13)]) % 10
     return not check_digit  # because 0 is correct
 
-def info_exist(dictionary, key):
+def url(url: str) -> bool:
     try:
-        var = dictionary[key]
-    except KeyError:
-        var = ""
-    return var
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except:
+        return False

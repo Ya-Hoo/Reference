@@ -1,3 +1,4 @@
+from datetime import datetime
 import json, os
 
 import validate
@@ -8,14 +9,13 @@ EXPORT_DIR = "./exports"
 BOOK_EXPORT = os.path.join(EXPORT_DIR, "books.json")
 WEBSITE_EXPORT = os.path.join(EXPORT_DIR, "websites.json")
 
-class Books:
-    def __init__(self, authors="", title="", subtitle="", pdate="", pub="") -> None:
+class Book:
+    def __init__(self, authors: list = [], title: str = "", subtitle: str = "", pdate: str = "", pub: str = "") -> None:
         self.authors = authors
         self.pdate = pdate
         self.title = title
         self.subtitle = subtitle
         self.pub = pub
-        
         
     def author(self) -> str:
         all_authors = []
@@ -43,16 +43,13 @@ class Books:
                 
         return ref
 
-
     def date(self) -> str:
         if self.pdate == "":
             return f"(n.d.)"
         return f"({self.pdate.split("-")[0]})"
 
-
     def name(self) -> str:
         return f"\033[3m{': '.join([self.title, self.subtitle])}\033[0m"
-    
     
     def publisher(self) -> str:
         # remove all words that indicate business purposes
@@ -69,14 +66,12 @@ class Books:
             
         return pub
 
-
     def finalise(self) -> str:
         author = self.author()
         date = self.date()
         name = self.name()
         publisher = self.publisher()
         return f"{author} {date}. {name}. {publisher}."
-    
     
     def export_json(self) -> None:
         # Check if xport folder exist, if not then create
@@ -98,8 +93,7 @@ class Books:
             book_list.append(data)
         with open(BOOK_EXPORT, 'w') as f:
             json.dump(book_list, f, indent=4)
-        
-        
+            
     def import_json(self) -> list:
         citations = []
         with open(BOOK_EXPORT, "r") as f:
@@ -115,4 +109,49 @@ class Books:
         citations.sort()
         
         return citations
-#https://apastyle.apa.org/style-grammar-guidelines/references/examples/book-references
+
+
+class Website:
+    def __init__(self, authors: list = [], pdate: str = "", title: str = "", url: str = "") -> None:
+        self.authors = authors
+        self.pdate = pdate
+        self.title = title
+        self.url = url
+        self.rdate = datetime.today().strftime("%B %d, %Y")
+        
+    def author(self) -> str: #WIP
+        pass
+    
+    def date(self) -> str: # need check
+        if self.pdate == "":
+            return f"(n.d.)"
+        return f"({self.pdate.split("-")[0]})"
+    
+    def name(self) -> str: #WIP
+        pass
+    
+    def publisher(self) -> str: #needs check
+        # remove all words that indicate business purposes
+        business_purposes = ["Inc.", "Incorporated", "Co.", "LLC"]
+        pub = self.pub.split()
+        for word in pub.copy():
+            if word in business_purposes:
+                pub.remove(word)
+        pub = ' '.join(pub)
+        
+        # remove trailing punctuations
+        if pub[-1] in ['.', ',']:
+            pub = pub[:-1]
+            
+        return pub
+    
+    def retrieval(self):
+        return f"Retrieved {self.rdate}, from {self.url}"
+    
+    def finalise(self) -> str:
+        author = self.author()
+        date = self.date()
+        name = self.name()
+        publisher = self.publisher()
+        retrieval = self.retrieval()
+        return f"{author} {date}. {name}. {publisher}. {retrieval}"
