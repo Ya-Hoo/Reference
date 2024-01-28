@@ -79,8 +79,9 @@ if change == 'y':
     proceed = int(input("When you finished editing books.json, type 1: "))
     CITATIONS = formats.Books().import_json()
     
-    decor("====================== final bibliography =======================", 3)
-    for i in CITATIONS:
-        print(i)
+decor("====================== final bibliography =======================", 3)
+for i in CITATIONS:
+    print(i)
+            
+decor("WARNING: When copying the text from terminal into a Doc, the italics will disappear. Just remember to reformat it afterwards.", 2)
         
-    
