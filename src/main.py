@@ -4,10 +4,16 @@ import validate
 import formats
 
 API_LINK = "https://www.googleapis.com/books/v1/volumes?q=isbn:"
+INFO_LINK = "https://www.googleapis.com/books/v1/volumes/"
 REFERENCES = "./references"
 BOOKS = os.path.join(REFERENCES, "books.txt")
 WEBSITES = os.path.join(REFERENCES, "websites.txt")
 CITATIONS = []
+
+if not os.path.exists(REFERENCES):
+    os.makedirs(os.path.join(os.getcwd(), "references"))
+    with open(BOOKS, 'x') as f: pass
+    with open(WEBSITES, 'x') as f: pass
 
 
 def txt_decor(msg: str, code: int) -> None:
@@ -20,11 +26,6 @@ def txt_decor(msg: str, code: int) -> None:
             print(f"\033[1;33m {msg} \033[0m")
 
 
-if not os.path.exists(REFERENCES):
-    os.makedirs(os.path.join(os.getcwd(), "references"))
-    with open(BOOKS, 'x') as f: pass
-    with open(WEBSITES, 'x') as f: pass
-    
 def check_info_exist(dictionary, key):
     try:
         var = dictionary[key]
@@ -32,29 +33,37 @@ def check_info_exist(dictionary, key):
         var = None
     return var
 
+
 with open(BOOKS, 'r') as f:
     print(f"File \"{BOOKS.split('/')[-1]}\"")
     for index, isbn in enumerate(f):
         isbn = isbn.rstrip()
         if validate.isbn10(isbn) or validate.isbn13(isbn):
-            with urllib.request.urlopen(API_LINK + isbn) as book:
+            with urllib.request.urlopen(API_LINK + isbn) as request:
                 msg = f"Line {index + 1} >> SUCCESS"
                 txt_decor(msg, 1)
                 
-                # Book data extraction
-                data = json.loads(book.read())
-                vol_info = data["items"][0]["volumeInfo"]
-                TITLE = check_info_exist(vol_info, "title")
-                SUBTITLE = check_info_exist(vol_info, "subtitle")
-                AUTHORS = check_info_exist(vol_info, "authors")
-                DATE = check_info_exist(vol_info, "publishedDate")
+                # getting ID
+                request_data = json.loads(request.read())                
+                BOOK_ID = request_data["items"][0]["id"]
                 
-                print(TITLE, SUBTITLE, AUTHORS, DATE)
+                with urllib.request.urlopen(INFO_LINK + BOOK_ID) as book:
+                    book_data = json.loads(book.read())
+                    vol_info = book_data['volumeInfo']
                 
-                # Formatting into APA
-                BookInfo = formats.Books(authors=AUTHORS, title=TITLE, subtitle=SUBTITLE, date=DATE)
-                CITATIONS.append(BookInfo.finalise())
+                    TITLE = check_info_exist(vol_info, "title")
+                    SUBTITLE = check_info_exist(vol_info, "subtitle")
+                    AUTHORS = check_info_exist(vol_info, "authors")
+                    DATE = check_info_exist(vol_info, "publishedDate")
+                    PUBLISHER = check_info_exist(vol_info, "publisher")
+                    
+                    print(TITLE, SUBTITLE, AUTHORS, DATE, PUBLISHER)
+                    
+                    # Formatting into APA
+                    BookInfo = formats.Books(authors=AUTHORS, title=TITLE, subtitle=SUBTITLE, date=DATE, publisher=PUBLISHER)
+                    CITATIONS.append(BookInfo.finalise())
         else:
             msg = f"Line {index + 1} >> ERROR: Invalid ISBN\n"
             txt_decor(msg, 0)
-            
+
+print(CITATIONS)
