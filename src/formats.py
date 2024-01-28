@@ -1,5 +1,15 @@
+import json, os
+
+import validate
+
+
+# Constants
+EXPORT_DIR = "./exports"
+BOOK_EXPORT = os.path.join(EXPORT_DIR, "books.json")
+WEBSITE_EXPORT = os.path.join(EXPORT_DIR, "websites.json")
+
 class Books:
-    def __init__(self, authors, title, subtitle, pdate, pub) -> None:
+    def __init__(self, authors="", title="", subtitle="", pdate="", pub="") -> None:
         self.authors = authors
         self.pdate = pdate
         self.title = title
@@ -45,12 +55,15 @@ class Books:
     
     
     def publisher(self) -> str:
+        # remove all words that indicate business purposes
         business_purposes = ["Inc.", "Incorporated", "Co.", "LLC"]
         pub = self.pub.split()
         for word in pub.copy():
             if word in business_purposes:
                 pub.remove(word)
         pub = ' '.join(pub)
+        
+        # remove trailing punctuations
         if pub[-1] in ['.', ',']:
             pub = pub[:-1]
             
@@ -66,13 +79,40 @@ class Books:
     
     
     def export_json(self) -> None:
-        return
-    
-    
-    def export_txt(self) -> None:
-        return
+        # Check if xport folder exist, if not then create
+        if not os.path.exists(BOOK_EXPORT):
+            os.makedirs(os.path.join(os.getcwd(), "exports"))
+            with open(BOOK_EXPORT, 'x') as f: json.dump([], f)
+        
+        # Deserialisation
+        data = {
+                "title": self.title,
+                "subtitle": self.subtitle,
+                "authors": self.authors,
+                "publishedDate": self.pdate,
+                "publisher": self.pub
+            }
+        with open(BOOK_EXPORT, "r") as f:
+            book_list = json.load(f)
+        if data not in book_list:
+            book_list.append(data)
+        with open(BOOK_EXPORT, 'w') as f:
+            json.dump(book_list, f, indent=4)
         
         
-    def import_json(self) -> None:
-        return
+    def import_json(self) -> list:
+        citations = []
+        with open(BOOK_EXPORT, "r") as f:
+            book_list = json.load(f)
+        for book in book_list:
+            self.authors = validate.info_exist(book, "authors")
+            self.pdate = validate.info_exist(book, "publishedDate")
+            self.title = validate.info_exist(book, "title")
+            self.subtitle = validate.info_exist(book, "subtitle")
+            self.pub = validate.info_exist(book, "publisher")
+            
+            citations.append(self.finalise())
+        citations.sort()
+        
+        return citations
 #https://apastyle.apa.org/style-grammar-guidelines/references/examples/book-references

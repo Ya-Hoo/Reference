@@ -20,39 +20,30 @@ if not os.path.exists(REFERENCES):
     exit()
 
 
-def txt_decor(msg: str, code: int) -> None:
-    pre_msg, post_msg = msg.split(" >> ")
+def decor(msg: str, code: int) -> None:
+    if " >> " in msg:
+        pre_msg, post_msg = msg.split(" >> ")
     match code:
         case 0:  # alert
             print(f"{pre_msg} >>\033[1;31m {post_msg} \033[0m")
         case 1:  # success
             print(f"{pre_msg} >>\033[1;32m {post_msg} \033[0m")
         case 2:  # warning
-            print(f"{pre_msg} >>\033[1;33m {post_msg} \033[0m")
-        case 3:  # process status
-            print(f"{pre_msg} >>\033[1;33m {post_msg} \033[0m")
+            print(f"\n\033[1;33m{msg}\033[0m")
+        case 3:  # process status/headers
+            print(f"\n\033[1;34m{msg.upper()}\033[0m")
 
 
-def check_info_exist(dictionary, key):
-    try:
-        var = dictionary[key]
-    except KeyError:
-        var = None
-    return var
-
-
+decor("======================== Retrieving data ========================", 3)
+print(f"File \"{BOOKS.split('\\')[-1]}\"")
 with open(BOOKS, 'r') as f:
-    print(f"File \"{BOOKS.split('\\')[-1]}\"")
     for index, isbn in enumerate(f):
         isbn = isbn.rstrip()
         if validate.isbn10(isbn) or validate.isbn13(isbn):
             with urllib.request.urlopen(API_LINK + isbn) as request:
-                msg = f"Line {index + 1} >> SUCCESS"
-                txt_decor(msg, 1)
-                
-                # Getting ID
-                request_data = json.loads(request.read())                
-                BOOK_ID = request_data["items"][0]["id"]
+                decor(f"    - Line {index + 1} >> SUCCESS", 1)
+              
+                BOOK_ID = json.loads(request.read())["items"][0]["id"]
             
             # Getting all necessary info and put as dictionary
             with urllib.request.urlopen(INFO_LINK + BOOK_ID) as book:
@@ -60,23 +51,36 @@ with open(BOOKS, 'r') as f:
                 vol_info = book_data['volumeInfo']
 
             # Extracting data
-            TITLE = check_info_exist(vol_info, "title")
-            SUBTITLE = check_info_exist(vol_info, "subtitle")
-            AUTHORS = check_info_exist(vol_info, "authors")
-            DATE = check_info_exist(vol_info, "publishedDate")
-            PUBLISHER = check_info_exist(vol_info, "publisher")
+            TITLE = validate.info_exist(vol_info, "title")
+            SUBTITLE = validate.info_exist(vol_info, "subtitle")
+            AUTHORS = validate.info_exist(vol_info, "authors")
+            DATE = validate.info_exist(vol_info, "publishedDate")
+            PUBLISHER = validate.info_exist(vol_info, "publisher")
+            BookInfo = formats.Books(authors=AUTHORS, title=TITLE, subtitle=SUBTITLE, pdate=DATE, pub=PUBLISHER)
             
             # Formatting into APA
-            BookInfo = formats.Books(authors=AUTHORS, title=TITLE, subtitle=SUBTITLE, pdate=DATE, pub=PUBLISHER)
             CITATIONS.append(BookInfo.finalise())
             
+            # Exporting json reference
+            BookInfo.export_json()
+            
         else:
-            msg = f"Line {index + 1} >> ERROR: Invalid ISBN\n"
-            txt_decor(msg, 0)
+            decor(f"    - Line {index + 1} >> ERROR: Invalid ISBN", 0)
 
-
-
-
+decor("========================= bibliography ==========================", 3)
 CITATIONS.sort()
 for i in CITATIONS:
     print(i)
+    
+decor("=========================== editing =============================", 3)
+change = input("Do you want to change any citation details (y/n): ").lower()
+if change == 'y':
+    decor("WARNING: Before you type 1, please remember to save the json file.", 2)
+    proceed = int(input("When you finished editing books.json, type 1: "))
+    CITATIONS = formats.Books().import_json()
+    
+    decor("====================== final bibliography =======================", 3)
+    for i in CITATIONS:
+        print(i)
+        
+    

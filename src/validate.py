@@ -9,3 +9,10 @@ def isbn13(isbn13: str) -> bool:
         return 0
     check_digit = sum([int(isbn13[i]) * [1, 3][i % 2] for i in range(13)]) % 10
     return not check_digit  # because 0 is correct
+
+def info_exist(dictionary, key):
+    try:
+        var = dictionary[key]
+    except KeyError:
+        var = ""
+    return var
