@@ -12,6 +12,7 @@ WEBSITES = os.path.join(REFERENCES, "websites.txt")
 CITATIONS = []
 
 
+# just decorating print stuff with colours
 def decor(msg: str, code: int) -> None:
     if " >> " in msg:
         pre_msg, post_msg = msg.split(" >> ")
@@ -51,13 +52,7 @@ with open(BOOKS, 'r') as f:
 
             decor(f"    - Line {index + 1} >> SUCCESS", 1)
             _, TITLE, SUBTITLE, AUTHORS, DATE, PUBLISHER = book.__dict__.values()
-            BookInfo = formats.Book(
-                AUTHORS,
-                TITLE,
-                SUBTITLE,
-                DATE,
-                PUBLISHER
-            )
+            BookInfo = formats.Book(AUTHORS, TITLE, SUBTITLE, DATE, PUBLISHER)
 
             # Formatting into APA
             CITATIONS.append(BookInfo.finalise())
